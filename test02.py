@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-
+﻿# -*- coding: utf-8 -*-
+#inital module
 import datetime
 import sys
 
