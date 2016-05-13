@@ -4,7 +4,7 @@ import numpy as np
 class SVR:
 
     err = 0.002
-    eps = 0.0005
+    eps = 0
 
     def __init__(self, data_y, data_x, rate):
         self.y = data_y
@@ -76,43 +76,49 @@ class SVR:
         funcL -= step*step*sub1/2
         funcL -= step*sub2/2
         diffL -= (step*sub1+sub2/2)
-        return(funcL, diffL)
-
-    def search(self, alp, grad):
+        diff2L = -sub1
+        return(funcL, diffL, diff2L)
+    
+    def newtonMethod(self, alf, grad):
         x = 1
-        h = 0.1
-        counter = 0
-        diff = 1
-        while abs(diff) > self.eps:
-            h = 1*abs(h) if(self.calcLs(x, alp, grad)[1]) else -1*abs(h)
-            lx = x
-            llx = x+h
-            funcX = self.calcLs(lx, alp, grad)[0]
-            funcXs = self.calcLs(llx, alp, grad)[0]
-            print(funcX)
-            if(funcX < funcXs):
-                while funcX < funcXs:
-                    h *= 2
-                    lx = llx
-                    llx = lx+h
-                    funcX = self.calcLs(lx, alp, grad)[0]
-                    funcXs = self.calcLs(llx, alp, grad)[0]
-                    print("loop1:"+str(funcX))
-                    print("===:"+str(funcXs))
-                x = lx
-                h /= 2
-                diff = self.calcLs(x, alp, grad)[1]
-            else:
-                while funcX > funcXs:
-                    h /= 2
-                    llx -= h
-                    funcX = self.calcLs(lx, alp, grad)[0]
-                    funcXs = self.calcLs(llx, alp, grad)[0]
-                    print("loop2:"+str(funcX))
-                x = llx
-                h *= 2
-                diff = self.calcLs(x, alp, grad)[1]
-                print(diff)
+        xb = 2
+        while abs(x-xb) < self.eps:
+            xb = x
+            funcs = self.calcLs(xb, alp, grad)
+            x = xb + funcs[1]/funcs[2]
+        return x
+        
+    def exactSol(self, alp, grad):
+        sub = 0
+        count = 0
+        while count < len(self.y):
+            ln = grad[2*count]-grad[2*count+1]
+            kn = grad[2*count]+grad[2*count+1]
+            sub += ln-self.eps*kn
+            count += 1
+        b = sub
+
+        n = 0
+        m = 0
+        sub1 = 0
+        sub2 = 0
+        while n < len(self.y):
+            ln = grad[2*n]-grad[2*n+1]
+            an = alp[2*n]-alp[2*n+1]
+            xn = self.x[n]
+            while m < len(self.y):
+                lm = grad[2*m]-grad[2*m+1]
+                km = grad[2*m]+grad[2*m+1]
+                am = alp[2*m]-alp[2*m+1]
+                xm = self.x[m]
+                sub1 = ln*lm*self.kernel(xn, xm)
+                sub2 = ln*am+km*an*self.kernel(xn, xm)
+                m += 1
+            n += 1
+        a = sub1
+        b += sub2/2
+        print(str(a)+", "+str(b))
+        x = 0.2 if(a < self.err) else -b/a
         return x
 
     def getFunction(self, alp):
@@ -138,11 +144,12 @@ class SVR:
         return term1-term2-term3/2
 
     def hillClimbing(self):
-        x = np.ones(2*len(self.y))
-        norm_dx = 1
+        x = np.random.rand(2*len(self.y))
+        norm_dx = 100
         while norm_dx > self.err:
             grad = self.getGradient(x)
-            step = self.search(x, grad)
+            step = self.exactSol(x, grad)
+            #step = self.rate
             print("step:"+str(step))
             d_x = step*grad
             x  = x + d_x
