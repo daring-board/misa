@@ -22,16 +22,15 @@ if __name__ == "__main__": #EntryPoint
         print(x)
     print("sample :"+str(y))
     
-    svr = svm.SVR( y,set_x, 0.2)
+    svr = svm.SVR( y,set_x)
     svr.executeLearn()
 
     count = 0
     while count < 10:
-        x = [count, np.pi]
+        x = [count, np.pi/2]
         print("Input:")
         print(x)
         y = svr.getResult(x)
         print("Result:"+str(y))
-        svr.update(x,0)
+        #svr.update(x,0)
         count += 1
-        
