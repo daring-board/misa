@@ -25,7 +25,7 @@ class SVR:
     """ ガウシアンカーネル """
     def kernel(self, x1, x2):
         x = np.linalg.norm(x1-x2)
-        return np.exp(-x*x/(2*100*100))
+        return np.exp(-x*x/(2*self.sigmma**2))
 
     """ サポートベクトル回帰のための目的関数"""
     def getFunction(self, nalp, malp):
