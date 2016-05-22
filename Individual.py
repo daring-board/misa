@@ -5,7 +5,7 @@ import numpy as np
 class Individual:
     """ 遺伝アルゴリズムで使用する個体クラス"""
     def __init__(self, length):
-        self.chro = np.random.rand(length)*5
+        self.chro = np.random.rand(length)*10-5
         self.fitness = 0
 
     # 個体の遺伝子型を取得する
