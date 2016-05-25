@@ -41,9 +41,14 @@ if __name__ == "__main__": #EntryPoint
         print(xd)
     #print(len(xd_set))
 
+    list = []
+    for x in xd_set:
+        list.append(x[code])
+    std = np.std(np.array(list))
+
     x_set = np.array(xd_set)
     y = np.array(yd)
-    svr = svm.SVR( y, x_set)
+    svr = svm.SVR( y, x_set, std)
     svr.executeLearn()
 
     print(data_set[len(data_set)-2])

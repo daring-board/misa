@@ -4,15 +4,15 @@ import numpy as np
 class SVR:
 
     #ハイパーパラメータ
-    err = 0.0001  #許容誤差
-    eps = 0   #モデル関数の定数
+    err = 0.0001 #許容誤差
+    eps = 0.001   #モデル関数の定数
     rate = 0.2  #学習率(勾配降下法のステップ幅)
-    sigmma = 100 #ガウシアンカーネルのパラメータ
 
     """サポートベクトル回帰(SVR)"""
-    def __init__(self, data_y, data_x):
+    def __init__(self, data_y, data_x, s):
         self.y = data_y
         self.x = data_x
+        self.sigmma = s#ガウシアンカーネルのパラメータ
 
     """ガウシアン 正規分布関数因子"""
     def gaussian(self, x):
@@ -79,7 +79,7 @@ class SVR:
                 s_sum += (l[n] * a[m] + k[m] * a[n]) * self.kernel(self.x[n], self.x[m])
         s_sum /= 2
         s_sum += np.dot(l, self.y) - self.eps * np.sum(k)
-        return -s_sum / f_sum
+        return s_sum / f_sum
 
     def newtonMethod(self, nalp, malp, ngrad, mgrad):
         a = nalp - malp
@@ -99,22 +99,21 @@ class SVR:
             s_sum = 0
             for n in range(len(l)):
                 for m in range(len(l)):
-                    s_sum += l[n] * a[m] + k[m] * a[n] * self.kernel(self.x[n], self.x[m])
+                    s_sum += (l[n] * a[m] + k[m] * a[n]) * self.kernel(self.x[n], self.x[m])
             s_sum /= 2
-            s_sum += np.sum(l)
+            s_sum += np.dot(l, self.y)
             s_sum -= self.eps * np.sum(k)
             diff1 += s_sum
             t = tmp_t+diff1/diff2
             #print(str(t)+", "+str(diff1/diff2))
-        return t
+        return -t
 
     """ 目的関数を最大化するような変数nalpとbalpを求める
 　　　　最適値を求める必要はない"""
     def hillClimbing(self):
-        nalp = np.zeros(len(self.y))
-        balp = np.zeros(len(self.y))
-        x = np.random.rand(2*len(self.y))
-        norm_dx = 1
+        nalp = np.ones(len(self.y))
+        balp = np.ones(len(self.y))
+        norm_dx = 10
         while norm_dx > self.err:
             grad = self.getGradient(nalp, balp)
             #step = self.rate
@@ -122,9 +121,9 @@ class SVR:
             #step = self.newtonMethod(nalp, balp, grad[0], grad[1])
             print("step:"+str(step))
             norm_dx = np.linalg.norm(np.r_[step*grad[0], step*grad[1]])
-            nalp += step*grad[0]
-            balp += step*grad[1]
-            #print(d_x)
+            nalp -= step*grad[0]
+            balp -= step*grad[1]
+            #print(grad)
             print(norm_dx)
         return (nalp, balp)
 
@@ -156,7 +155,7 @@ class SVR:
             y += (alp[0][n]-alp[1][n])*self.kernel(x, x_n)
         print(str(y)+", "+str(b))
         y += b
-        return y
+        return y/2
 
     """ オンライン学習のための損失関数 """
     def calcLoss(self, data_x, data_y):
