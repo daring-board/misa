@@ -20,7 +20,7 @@ if __name__ == "__main__": #EntryPoint
             data_set[day].append(int(d[day]))
 
 
-    code = 6
+    code = 4
     #教師データの作成(4/2～5/19)
     yd = []
     for data in data_set:

@@ -4,8 +4,8 @@ import numpy as np
 class SVR:
 
     #ハイパーパラメータ
-    err = 0.9  #許容誤差
-    eps = 0    #モデル関数の定数
+    err = 0.0001  #許容誤差
+    eps = 0   #モデル関数の定数
     rate = 0.2  #学習率(勾配降下法のステップ幅)
     sigmma = 100 #ガウシアンカーネルのパラメータ
 
@@ -67,22 +67,46 @@ class SVR:
         return(grad_n, grad_b)
 
     def lineSearch(self, nalp, malp, ngrad, mgrad):
-        a = nalp-malp
-        b = nalp+malp
-        l = ngrad-mgrad
-        k = ngrad+mgrad
+        a = nalp - malp
+        b = nalp + malp
+        l = ngrad - mgrad
+        k = ngrad + mgrad
         f_sum = 0
-        for n in range(len(l)):
-            for m in range(len(l)):
-                f_sum += l[n]*l[m]*self.kernel(self.x[n], self.x[m])
         s_sum = 0
         for n in range(len(l)):
             for m in range(len(l)):
-                s_sum += l[n]*a[m]+k[m]*a[n]*self.kernel(self.x[n], self.x[m])
+                f_sum += l[n] * l[m] * self.kernel(self.x[n], self.x[m])
+                s_sum += (l[n] * a[m] + k[m] * a[n]) * self.kernel(self.x[n], self.x[m])
         s_sum /= 2
-        s_sum += np.sum(l)
-        s_sum -= self.eps*np.sum(k)
-        return -s_sum/(2*f_sum)
+        s_sum += np.dot(l, self.y) - self.eps * np.sum(k)
+        return -s_sum / f_sum
+
+    def newtonMethod(self, nalp, malp, ngrad, mgrad):
+        a = nalp - malp
+        b = nalp + malp
+        l = ngrad - mgrad
+        k = ngrad + mgrad
+        diff2 = 0
+        for n in range(len(l)):
+            for m in range(len(l)):
+                diff2 += l[n] * l[m] * self.kernel(self.x[n], self.x[m])
+        t = 0.5
+        tmp_t = 2
+        while abs(t-tmp_t) > self.err:
+            tmp_t = t
+            diff1 = 0
+            diff1 += -t*diff2
+            s_sum = 0
+            for n in range(len(l)):
+                for m in range(len(l)):
+                    s_sum += l[n] * a[m] + k[m] * a[n] * self.kernel(self.x[n], self.x[m])
+            s_sum /= 2
+            s_sum += np.sum(l)
+            s_sum -= self.eps * np.sum(k)
+            diff1 += s_sum
+            t = tmp_t+diff1/diff2
+            #print(str(t)+", "+str(diff1/diff2))
+        return t
 
     """ 目的関数を最大化するような変数nalpとbalpを求める
 　　　　最適値を求める必要はない"""
@@ -93,9 +117,10 @@ class SVR:
         norm_dx = 1
         while norm_dx > self.err:
             grad = self.getGradient(nalp, balp)
-            step = self.rate
-            #step = self.lineSearch(nalp, balp, grad[0], grad[1])
-            #print(step)
+            #step = self.rate
+            step = self.lineSearch(nalp, balp, grad[0], grad[1])
+            #step = self.newtonMethod(nalp, balp, grad[0], grad[1])
+            print("step:"+str(step))
             norm_dx = np.linalg.norm(np.r_[step*grad[0], step*grad[1]])
             nalp += step*grad[0]
             balp += step*grad[1]
