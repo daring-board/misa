@@ -63,10 +63,13 @@ class SVR:
         for n in range(alp.size):
             grad_n[n] = self.getPartGrad(alp, n, True)
             grad_b[n] = self.getPartGrad(alp, n, False)
+        grad_n = grad_n / np.linalg.norm(grad_n)
+        grad_b = grad_b / np.linalg.norm(grad_b)
         return(grad_n, grad_b)
 
     def lineSearch(self, nalp, malp, ngrad, mgrad):
         a = nalp - malp
+        b = nalp + malp
         l = ngrad - mgrad
         k = ngrad + mgrad
         f_sum = 0
@@ -116,11 +119,13 @@ class SVR:
             grad = self.getGradient(nalp, balp)
             #step = self.rate
             step = self.lineSearch(nalp, balp, grad[0], grad[1])
+            #step = self.newtonMethod(nalp, balp, grad[0], grad[1])
+            #print("step:"+str(step))
             norm_dx = np.linalg.norm(np.r_[step*grad[0], step*grad[1]])
             nalp -= step*grad[0]
             balp -= step*grad[1]
-            #print(grad)
-            #print(norm_dx)
+            print(grad)
+            print(norm_dx)
         return (nalp, balp)
 
     """ """
@@ -151,7 +156,7 @@ class SVR:
         b /= self.y.size*2
         print(str(y)+", "+str(b))
         y += b
-        return abs(y/2)
+        return y
 
     """ オンライン学習のための損失関数 """
     def calcLoss(self, data_x, data_y):
@@ -175,6 +180,8 @@ class SVR:
 
     """ 入力したdataから推定される値を返却する"""
     def getResult(self, data):
+        #print(self.result[0])
+        #print(self.result[1])
         return self.creatResult(self.result, np.array(data))
                 
             
