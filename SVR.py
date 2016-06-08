@@ -4,7 +4,7 @@ import numpy as np
 class SVR:
 
     #ハイパーパラメータ
-    err = 0.1 #許容誤差
+    err = 0.001 #許容誤差
     eps = 0.00001   #モデル関数の定数
     rate = 0.2  #学習率(勾配降下法のステップ幅)
 
@@ -76,7 +76,7 @@ class SVR:
                 f_sum += l[n] * l[m] * self.kernel(self.x[n], self.x[m])
                 s_sum += (l[n] * a[m] + k[m] * a[n]) * self.kernel(self.x[n], self.x[m])
         s_sum /= 2
-        s_sum += np.dot(l, self.y) - self.eps * np.sum(k)
+        s_sum += np.sum(np.multiply(l, self.y)) - self.eps * np.sum(k)
         return s_sum / f_sum
 
     def newtonMethod(self, nalp, malp, ngrad, mgrad):
@@ -109,9 +109,9 @@ class SVR:
     """ 目的関数を最大化するような変数nalpとbalpを求める
 　　　　最適値を求める必要はない"""
     def hillClimbing(self):
-        nalp = np.ones(len(self.y))
+        nalp = np.zeros(len(self.y))
         balp = np.ones(len(self.y))
-        norm_dx = 10
+        norm_dx = 1
         while norm_dx > self.err:
             grad = self.getGradient(nalp, balp)
             #step = self.rate
@@ -143,6 +143,7 @@ class SVR:
     def creatResult(self, alp, x):
         b = 0
         y = 0
+        print(alp)
         for n in range(self.y.size):
             x_n = self.x[n]
             b += self.getConstFactor(alp[0]-alp[1], n, True)
